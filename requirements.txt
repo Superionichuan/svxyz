@@ -1,0 +1,6 @@
+ase
+numpy
+matplotlib
+scipy
+mplcursors
+
