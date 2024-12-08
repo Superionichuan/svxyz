@@ -1,0 +1,4 @@
+[console_scripts]
+dxyz = svxyz.dxyz:main
+pxyz = svxyz.pxyz:main
+txyz = svxyz.txyz:main

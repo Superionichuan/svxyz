@@ -1,0 +1,48 @@
+Metadata-Version: 2.1
+Name: svxyz
+Version: 0.1.0
+Summary: A suite of scripts for XYZ data processing (txyz, dxyz, pxyz)
+Home-page: https://github.com/Superionichuan/svxyz
+Author: Shichuan Sun
+Author-email: einstchuan@gmail.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: ase
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: mplcursors
+
+# svxyz
+
+`svxyz` is a suite of command-line tools designed to handle and process XYZ data for scientific and computational tasks. This package provides three powerful scripts: `txyz`, `dxyz`, and `pxyz`, each tailored for specific use cases like filtering, visualization, and data extraction.
+
+---
+
+## Features
+
+- **`txyz`**:  
+  Processes `vasprun.xml` files to filter atomic configurations based on energy, force, stress, and frame ranges. Supports flexible JSON configuration for custom workflows.
+  
+- **`dxyz`**:  
+  Extracts energy, forces, and stresses from XYZ files and writes them to separate `.dat` files for further analysis.
+
+- **`pxyz`**:  
+  Visualizes data from `.dat` or `infile.dat` formats with dynamic plotting capabilities, including KDE distributions and projections.
+
+---
+
+## Installation
+
+### From Source
+
+Clone the repository and install the package:
+
+```bash
+git clone https://github.com/yourusername/svxyz.git
+cd svxyz
+pip install .
+
