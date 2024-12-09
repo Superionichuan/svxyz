@@ -8,6 +8,9 @@ EV_A3_TO_GPA = 160.21766208
 
 # 默认配置文件内容
 DEFAULT_CONFIG = {
+    "input_file": "vasprun.xml",      # 默认输入文件名
+    "input_format": "vasp-xml",      # 默认输入文件格式
+    "output_file": "filtered_output.xyz",  # 默认输出文件名
     "skip": {
         "on": 1,
         "count": 500
@@ -140,21 +143,24 @@ def main():
     # 加载或生成配置文件
     config = load_or_create_config()
 
+    # 提取输入和输出文件信息
+    input_file = config.get("input_file", "vasprun.xml")
+    input_format = config.get("input_format", "vasp-xml")
+    output_file = config.get("output_file", "filtered_output.xyz")
+
     # 读取输入数据
-    input_file = "vasprun.xml"
     if not os.path.exists(input_file):
         print(f"Error: {input_file} not found.")
         return
 
-    print(f"Reading frames from {input_file}...")
-    atoms_list = read(input_file, index=':')
+    print(f"Reading frames from {input_file} with format {input_format}...")
+    atoms_list = read(input_file, index=':', format=input_format)
 
     # 筛选帧
     print("Filtering frames based on configuration...")
     filtered_atoms = filter_atoms(atoms_list, config)
 
     # 保存筛选结果
-    output_file = "filtered_output.xyz"
     write(output_file, filtered_atoms)
     print(f"Filtered {len(filtered_atoms)} frames saved to {output_file}")
 

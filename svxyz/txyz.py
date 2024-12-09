@@ -1,6 +1,7 @@
 import os
 import json
 import numpy as np
+from glob import glob
 from ase.io import read, write
 
 # 常量: 从 eV/Å³ 转换为 GPa
@@ -8,12 +9,12 @@ EV_A3_TO_GPA = 160.21766208
 
 # 默认配置文件内容
 DEFAULT_CONFIG = {
-    "input_file": "vasprun.xml",      # 默认输入文件名
-    "input_format": "vasp-xml",      # 默认输入文件格式
+    "input_files": ["vasprun.xml"],      # 支持多个输入文件，或通配符路径
+    "input_format": "vasp-xml",         # 默认输入文件格式
     "output_file": "filtered_output.xyz",  # 默认输出文件名
     "skip": {
-        "on": 1,
-        "count": 500
+        "on": 1,  # 是否启用跳过功能
+        "count": 500  # 跳过的帧数
     },
     "frame_range": [
         None,
@@ -53,7 +54,7 @@ DEFAULT_CONFIG = {
             None
         ]
     },
-    "atomic_filters": ["O", "Fe"],  # 仅筛选含氧和铁的帧
+    "atomic_filters": None,  # 默认不过滤原子种类
     "stress_unit": "GPa",
     "show_summary": True
 }
@@ -75,7 +76,7 @@ def load_or_create_config(file_name="txyz.json"):
 
 def filter_atoms(atoms_list, config):
     """按配置筛选帧"""
-    skip_count = config["skip"]["count"] if config["skip"]["on"] else 0
+    skip_count = config["skip"]["count"] if config["skip"].get("on", 0) else 0
     frame_range = config["frame_range"]
     energy_range = config["energy_range"]
     max_atomic_force_range = config["max_atomic_force_range"]
@@ -131,45 +132,74 @@ def filter_atoms(atoms_list, config):
         # 按原子种类筛选
         if atomic_filters:
             symbols = atoms.get_chemical_symbols()
-            if not any(el in atomic_filters for el in symbols):
+            symbols_count = {el: symbols.count(el) for el in set(symbols)}
+            atomic_filter_passed = True
+            for element, count in atomic_filters:
+                if element in symbols_count:
+                    # 如果设置了数量要求
+                    if count is not None and symbols_count[element] != count:
+                        atomic_filter_passed = False
+                        break
+                else:
+                    # 如果不存在该元素，且要求其存在
+                    if count is not None:  # 数量不为 null 且不存在该元素
+                        atomic_filter_passed = False
+                        break
+            if not atomic_filter_passed:
                 continue
 
         # 如果所有条件通过，添加到结果中
         filtered_atoms.append(atoms)
 
-    return filtered_atoms
+    return filtered_atoms, skip_count
 
 def main():
     # 加载或生成配置文件
     config = load_or_create_config()
 
     # 提取输入和输出文件信息
-    input_file = config.get("input_file", "vasprun.xml")
+    input_files = config.get("input_files", ["vasprun.xml"])
     input_format = config.get("input_format", "vasp-xml")
     output_file = config.get("output_file", "filtered_output.xyz")
 
-    # 读取输入数据
-    if not os.path.exists(input_file):
-        print(f"Error: {input_file} not found.")
+    # 解析通配符路径
+    all_files = []
+    for pattern in input_files:
+        all_files.extend(glob(pattern))
+
+    if not all_files:
+        print(f"Error: No input files found matching patterns: {input_files}")
         return
 
-    print(f"Reading frames from {input_file} with format {input_format}...")
-    atoms_list = read(input_file, index=':', format=input_format)
+    filtered_atoms_total = []
+    total_frames = 0
+    for input_file in all_files:
+        print(f"Reading frames from {input_file} with format {input_format}...")
+        try:
+            atoms_list = read(input_file, index=':', format=input_format)
+        except Exception as e:
+            print(f"Error reading file {input_file} with format {input_format}: {e}")
+            continue
 
-    # 筛选帧
-    print("Filtering frames based on configuration...")
-    filtered_atoms = filter_atoms(atoms_list, config)
+        total_frames += len(atoms_list)
+
+        # 筛选帧
+        print(f"Filtering frames from {input_file}...")
+        filtered_atoms, skip_count = filter_atoms(atoms_list, config)
+        filtered_atoms_total.extend(filtered_atoms)
 
     # 保存筛选结果
-    write(output_file, filtered_atoms)
-    print(f"Filtered {len(filtered_atoms)} frames saved to {output_file}")
+    write(output_file, filtered_atoms_total)
+    print(f"Filtered {len(filtered_atoms_total)} frames saved to {output_file}")
 
     # 打印摘要
     if config["show_summary"]:
         print(f"\nSummary:")
-        print(f"  Total frames: {len(atoms_list)}")
-        print(f"  Skipped frames: {config['skip']['count']}")
-        print(f"  Filtered frames: {len(filtered_atoms)}")
+        print(f"  Total frames: {total_frames}")
+        print(f"  Each File Skipped frames: {skip_count}")
+        print(f"  Filtered frames: {len(filtered_atoms_total)}")
+
+
 
 if __name__ == "__main__":
     main()
