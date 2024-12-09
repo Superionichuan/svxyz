@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="svxyz",
     version="1.1.2",
-    description="A suite of scripts for XYZ data processing (txyz, dxyz, pxyz)",
+    description="A suite of scripts for XYZ data processing (txyz, xyz2pos, dxyz, pxyz)",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Shichuan Sun",
@@ -20,6 +20,7 @@ setup(
     entry_points={
         "console_scripts": [
             "txyz=svxyz.txyz:main",
+            "xyz2pos=svxyz.xyz2pos:main",
             "dxyz=svxyz.dxyz:main",
             "pxyz=svxyz.pxyz:main"
         ],

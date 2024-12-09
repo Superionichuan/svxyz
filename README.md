@@ -7,7 +7,10 @@
 ## Features
 
 - **`txyz`**:  
-  Processes `vasprun.xml` files to filter atomic configurations based on energy, force, stress, and frame ranges. Supports flexible JSON configuration for custom workflows.
+  Processes `vasprun.xml/OUTCAR` files to filter atomic configurations based on energy, force, stress, and frame ranges. Supports flexible JSON configuration for custom workflows.
+
+- **`xyz2pos`**:
+  Extract specific configuration POSCAR* from `.xyz` file.
   
 - **`dxyz`**:  
   Extracts energy, forces, and stresses from XYZ files and writes them to separate `.dat` files for further analysis.
