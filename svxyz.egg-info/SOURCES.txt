@@ -1,9 +1,11 @@
 README.md
+pyproject.toml
 setup.py
 svxyz/__init__.py
 svxyz/dxyz.py
 svxyz/pxyz.py
 svxyz/txyz.py
+svxyz/xyz2pos.py
 svxyz.egg-info/PKG-INFO
 svxyz.egg-info/SOURCES.txt
 svxyz.egg-info/dependency_links.txt
