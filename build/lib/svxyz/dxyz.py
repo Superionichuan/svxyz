@@ -6,7 +6,7 @@ import numpy as np
 
 def extract_properties_with_ids(xyz_file):
     """
-    从包含信息的 XYZ 文件中提取能量、力、virial、应力、温度、压力、体积和最小距离数据，
+    从包含信息的 XYZ 文件中提取能量、力、virial、应力、温度、压力和体积数据，
     分别写入 E.dat, F.dat, virial.dat, stress.dat 和 extra_info.dat。
 
     Args:
@@ -15,6 +15,9 @@ def extract_properties_with_ids(xyz_file):
     try:
         # 加载所有帧
         atoms_list = read(xyz_file, index=":")
+
+        # 检查是否存在 `mindistance` 信息
+        has_mindistance = any("mindistance" in atoms.info for atoms in atoms_list)
 
         # 打开输出文件
         with open("E.dat", "w") as e_file, \
@@ -28,7 +31,12 @@ def extract_properties_with_ids(xyz_file):
             f_file.write("Max_atomic_force_norm Mean_atomic_force_norm System_ID\n")
             vir_file.write("V_xx V_yy V_zz V_yz V_xz V_xy System_ID\n")
             stress_file.write("S_xx S_yy S_zz S_yz S_xz S_xy System_ID\n")
-            extra_file.write("Temperature(K) Pressure(GPa) Volume(Å³) Min_Distance(Å) Atom_Pair System_ID\n")
+
+            # 根据是否有 `mindistance` 信息写入标题行
+            if has_mindistance:
+                extra_file.write("Temperature(K) Pressure(GPa) Volume(Å³) Min_Distance(Å) Atom_Pair System_ID\n")
+            else:
+                extra_file.write("Temperature(K) Pressure(GPa) Volume(Å³) System_ID\n")
 
             # 遍历每一帧
             for i, atoms in enumerate(atoms_list):
@@ -70,21 +78,17 @@ def extract_properties_with_ids(xyz_file):
                 vir_file.write(f"{virial[0]:.6f} {virial[1]:.6f} {virial[2]:.6f} "
                                f"{virial[3]:.6f} {virial[4]:.6f} {virial[5]:.6f} {i}\n")
 
-                # 提取额外信息：温度、压力、体积和最小距离
+                # 提取额外信息：温度、压力和体积
                 temperature = atoms.info.get("temperature", "N/A")
                 pressure = atoms.info.get("pressure", "N/A")
-                mindistance = atoms.info.get("mindistance", "N/A")  # 新增
+                extra_file.write(f"{temperature} {pressure} {volume:.6f} {i}\n")
 
-                # 默认值
-                min_distance, atom_pair = "N/A", "N/A"
-                if isinstance(mindistance, str):
-                    parts = mindistance.split()
-                    if len(parts) == 2:
-                        min_distance = parts[0]
-                        atom_pair = parts[1]
-
-                # 写入额外信息
-                extra_file.write(f"{temperature} {pressure} {volume:.6f} {min_distance} {atom_pair} {i}\n")
+                # 写入 `extra_info.dat`，根据是否有 `mindistance` 动态调整列
+                if has_mindistance:
+                    mindistance = atoms.info.get("mindistance", "N/A")
+                    extra_file.write(f"{temperature} {pressure} {volume:.6f} {mindistance} {i}\n")
+                else:
+                    extra_file.write(f"{temperature} {pressure} {volume:.6f} {i}\n")
 
         print("数据已成功写入 E.dat, F.dat, virial.dat, stress.dat 和 extra_info.dat。")
 

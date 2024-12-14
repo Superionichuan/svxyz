@@ -17,10 +17,10 @@ DEFAULT_CONFIG = {
     "frame_range": [None, None],
     "energy_range": [None, None],
     "max_atomic_force_range": [None, None],
-    "pressure_range": [None, None],
-    "volume_range": [None, None],
-    "temperature_range": [None, None],
-    "virial_filters": {
+    "pressure_range": [None, None],  # 新增压力过滤范围 (单位 GPa)
+    "volume_range": [None, None],    # 新增体积过滤范围 (单位 Å³)
+    "temperature_range": [None, None],  # 新增温度过滤范围 (单位 K)
+    "virial_filters": {  # 新增 virial 分量筛选范围
         "V_xx": [None, None],
         "V_yy": [None, None],
         "V_zz": [None, None],
@@ -37,7 +37,6 @@ DEFAULT_CONFIG = {
         "S_xy": [None, None]
     },
     "atomic_filters": None,
-    "min_distance": None,  # 最小距离 (Å)
     "stress_unit": "GPa",
     "show_summary": True
 }
@@ -138,21 +137,6 @@ def get_fstress(st_path, outcar_path, atoms_list):
 def calculate_pressure(stress):
     return np.mean(stress[:3])  # 压力为主应力的平均值
 
-
-# 计算最小原子间距及其原子对
-def calculate_min_distance(atoms):
-    positions = atoms.get_positions()
-    n_atoms = len(positions)
-    min_distance = float("inf")
-    min_pair = None
-    for i in range(n_atoms):
-        for j in range(i + 1, n_atoms):
-            distance = np.linalg.norm(positions[i] - positions[j])
-            if distance < min_distance:
-                min_distance = distance
-                min_pair = (i+1, j+1)
-    return min_distance, min_pair
-
 # 筛选并添加温度、压力、体积、应力和 virial 信息
 def filter_atoms(atoms_list, stresses, temperatures, config):
     skip_count = config["skip"]["count"] if config["skip"].get("on", 0) else 0
@@ -162,10 +146,9 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
     pressure_range = config["pressure_range"]
     volume_range = config["volume_range"]
     temperature_range = config["temperature_range"]
-    min_distance_threshold = config.get("min_distance")
+    virial_filters = config["virial_filters"]
 
     filtered_atoms = []
-    min_distance_violations = []
     for i, atoms in enumerate(atoms_list):
         if i < skip_count:
             continue
@@ -206,21 +189,31 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
         if temperature_range[1] is not None and temperature > temperature_range[1]:
             continue
 
-        min_distance, min_pair = calculate_min_distance(atoms)
-        if min_distance_threshold is not None and min_distance < min_distance_threshold:
-            min_distance_violations.append(f"Frame {i}, Atoms {min_pair}, Distance {min_distance:.4f}")
-            continue
+        # 按 virial 筛选
+        virial = -stress * volume if stress is not None else None
+        if virial is not None:
+            virial_filters_passed = True
+            for key, (lower, upper) in virial_filters.items():
+                idx = ["V_xx", "V_yy", "V_zz", "V_yz", "V_xz", "V_xy"].index(key)
+                value = virial[idx]
+                if lower is not None and value < lower:
+                    virial_filters_passed = False
+                    break
+                if upper is not None and value > upper:
+                    virial_filters_passed = False
+                    break
+            if not virial_filters_passed:
+                continue
 
         atoms.info["temperature"] = f"{temperature:.2f}"
         atoms.info["volume"] = f"{volume:.4f}"
         atoms.info["pressure"] = f"{pressure:.4f}" if pressure is not None else "N/A"
-        atoms.info["mindistance"] = f"{min_distance:.4f} {min_pair[0]}-{min_pair[1]}"
         if stress is not None:
             atoms.info["fstress"] = ", ".join(f"{s:.4f}" for s in stress)
 
         filtered_atoms.append(atoms)
 
-    return filtered_atoms, skip_count, min_distance_violations
+    return filtered_atoms, skip_count
 
 # 主函数
 def main():
@@ -240,7 +233,6 @@ def main():
 
     filtered_atoms_total = []
     total_frames = 0
-    min_distance_violations = []
     for input_file in all_files:
         print(f"Reading frames from {input_file} with format {input_format}...")
         try:
@@ -259,9 +251,8 @@ def main():
         stresses = get_fstress(st_path, outcar_path, atoms_list)
 
         print(f"Filtering frames from {input_file}...")
-        filtered_atoms, skip_count, violations = filter_atoms(atoms_list, stresses, temperatures, config)
+        filtered_atoms, skip_count = filter_atoms(atoms_list, stresses, temperatures, config)
         filtered_atoms_total.extend(filtered_atoms)
-        min_distance_violations.extend(violations)
 
     write(output_file, filtered_atoms_total)
     print(f"Filtered {len(filtered_atoms_total)} frames saved to {output_file}")
@@ -271,10 +262,6 @@ def main():
         print(f"  Total frames: {total_frames}")
         print(f"  Skipped frames: {skip_count}")
         print(f"  Filtered frames: {len(filtered_atoms_total)}")
-        if min_distance_violations:
-            print("\nMinimum distance violations:")
-            for violation in min_distance_violations:
-                print(f"  {violation}")
 
 
 if __name__ == "__main__":

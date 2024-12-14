@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: svxyz
-Version: 2.1.0
+Version: 2.1.1
 Summary: A suite of scripts for XYZ data processing (txyz, xyz2pos, dxyz, pxyz)
 Home-page: https://github.com/Superionichuan/svxyz
 Author: Shichuan Sun
