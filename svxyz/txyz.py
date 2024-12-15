@@ -1,9 +1,9 @@
 import os
 import re
-import sys
 import json
-import numpy as np
+import sys
 import argparse
+import numpy as np
 from glob import glob
 from ase.io import read, write
 
@@ -15,7 +15,7 @@ DEFAULT_CONFIG = {
     "input_files": ["vasprun.xml"],
     "input_format": "vasp-xml",
     "output_file": "filtered_output.xyz",
-    "skip": {"on": 1, "count": 500},
+    "skip": {"on": 0, "count": 500},
     "frame_range": [None, None],
     "energy_range": [None, None],
     "max_atomic_force_range": [None, None],
@@ -39,6 +39,7 @@ DEFAULT_CONFIG = {
         "S_xy": [None, None]
     },
     "atomic_filters": None,
+    "min_distance": {"on": 0, "threshold": None},  # 最小原子间距筛选
     "stress_unit": "GPa",
     "show_summary": True
 }
@@ -57,6 +58,24 @@ def load_or_create_config(file_name="txyz.json"):
         exit(0)
     with open(file_name, "r") as f:
         return json.load(f)
+
+
+# 计算最小原子间距及其原子对
+def calculate_min_distance(atoms):
+    positions = atoms.get_positions()
+    n_atoms = len(positions)
+    min_distance = float("inf")
+    min_pair = None
+    for i in range(n_atoms):
+        for j in range(i + 1, n_atoms):
+            distance = np.linalg.norm(positions[i] - positions[j])
+            if distance < min_distance:
+                min_distance = distance
+                min_pair = (i + 1, j + 1)  # 原子编号从 1 开始
+    return min_distance, min_pair
+
+
+
 
 # 从文件中提取温度
 def extract_temperatures_from_file(file_path, pattern):
@@ -149,8 +168,13 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
     volume_range = config["volume_range"]
     temperature_range = config["temperature_range"]
     virial_filters = config["virial_filters"]
+    #最小原子距离筛选
+    min_distance_config = config["min_distance"]
+    min_distance_on = min_distance_config["on"]
+    min_distance_threshold = min_distance_config["threshold"]
 
     filtered_atoms = []
+    min_distance_violations = []
     for i, atoms in enumerate(atoms_list):
         if i < skip_count:
             continue
@@ -207,11 +231,23 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
             if not virial_filters_passed:
                 continue
 
+        if min_distance_on:
+            min_distance, min_pair = calculate_min_distance(atoms)
+            #if min_distance_threshold is not None and min_distance < min_distance_threshold:
+            #    min_distance_violations.append(f"Frame {i}, Atoms {min_pair}, Distance {min_distance:.4f}")
+            #    continue
+            atoms.info["mindistance"] = f"{min_distance:.4f}"
+            atoms.info["min_pair"] = f"{min_pair[0]}-{min_pair[1]}"
+
+
         atoms.info["temperature"] = f"{temperature:.2f}"
         atoms.info["volume"] = f"{volume:.4f}"
         atoms.info["pressure"] = f"{pressure:.4f}" if pressure is not None else "N/A"
         if stress is not None:
             atoms.info["fstress"] = ", ".join(f"{s:.4f}" for s in stress)
+
+
+
 
         filtered_atoms.append(atoms)
 
@@ -219,7 +255,6 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
 
 # 主函数
 def main():
-"""
     parser = argparse.ArgumentParser(
         description="txyz: A tool to process and filter atomic configurations from vasprun.xml or OUTCAR files.\n\n"
                     "Usage:\n"
@@ -257,7 +292,6 @@ def main():
     # Exit if help is displayed
     if '-h' in sys.argv or '--help' in sys.argv:
         sys.exit(0)
-"""
 
     config = load_or_create_config()
 
