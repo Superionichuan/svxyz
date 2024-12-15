@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import argparse
 import os
 import sys
 from scipy.stats import gaussian_kde
@@ -216,6 +217,58 @@ def plot_distribution_and_projection(curves, system_ids, ylabel, labels, titles=
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description=(
+            "pxyz: A tool to visualize and analyze atomic simulation data from various sources.\n\n"
+            "Usage:\n"
+            "  python pxyz.py <data_type> <indices...> [-h]\n\n"
+            "Options:\n"
+            "  -h, --help      Show this help message and exit.\n\n"
+            "Arguments:\n"
+            "  <data_type>     Type of data to process. Supported types are:\n"
+            "                  - 'E': Energy data (from E.dat).\n"
+            "                  - 'F': Force norms data (from F.dat).\n"
+            "                  - 'virial': Virial stress tensor components (from virial.dat).\n"
+            "                  - 'stress': Stress tensor components (from stress.dat).\n"
+            "                  - 'infile': General data from infile.dat.\n"
+            "  <indices...>    Indices of curves to plot, starting from 0.\n\n"
+            "Description:\n"
+            "  This tool reads data from the specified input file type and generates two types of plots:\n"
+            "  1. Distribution Plot: Shows the probability density function (PDF) of the selected data curves.\n"
+            "  2. Projection Plot: Shows the selected data curves projected onto System_ID.\n\n"
+            "Output:\n"
+            "  The plots can be displayed interactively or saved to a file, based on the JSON configuration.\n\n"
+            "Example:\n"
+            "  python pxyz.py F 0 1\n"
+            "  This will plot the first two force norm curves (max and mean) from F.dat.\n\n"
+            "Notes:\n"
+            "  - Each data file must be properly formatted.\n"
+            "  - JSON configuration provides additional control over plot settings."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter  # 保证换行正常显示
+    )
+
+    parser.add_argument(
+        "data_type",
+        help="Type of data to process. Supported types: 'E', 'F', 'virial', 'stress', 'infile'."
+    )
+
+    parser.add_argument(
+        "indices",
+        nargs="+",
+        type=int,
+        help="Indices of curves to plot, starting from 0."
+    )
+
+    args = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+
+
+
     json_file = "pxyz.json"
     if not os.path.exists(json_file):
         with open(json_file, "w") as f:
