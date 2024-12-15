@@ -1,0 +1,90 @@
+{
+    "input_files": [
+        "vasprun.xml"
+    ],
+    "input_format": "vasp-xml",
+    "output_file": "filtered_output.xyz",
+    "skip": {
+        "on": 1,
+        "count": 500
+    },
+    "frame_range": [
+        null,
+        null
+    ],
+    "energy_range": [
+        null,
+        null
+    ],
+    "max_atomic_force_range": [
+        null,
+        null
+    ],
+    "pressure_range": [
+        null,
+        null
+    ],
+    "volume_range": [
+        null,
+        null
+    ],
+    "temperature_range": [
+        null,
+        null
+    ],
+    "virial_filters": {
+        "V_xx": [
+            null,
+            null
+        ],
+        "V_yy": [
+            null,
+            null
+        ],
+        "V_zz": [
+            null,
+            null
+        ],
+        "V_yz": [
+            null,
+            null
+        ],
+        "V_xz": [
+            null,
+            null
+        ],
+        "V_xy": [
+            null,
+            null
+        ]
+    },
+    "stress_filters": {
+        "S_xx": [
+            null,
+            null
+        ],
+        "S_yy": [
+            null,
+            null
+        ],
+        "S_zz": [
+            null,
+            null
+        ],
+        "S_yz": [
+            null,
+            null
+        ],
+        "S_xz": [
+            null,
+            null
+        ],
+        "S_xy": [
+            null,
+            null
+        ]
+    },
+    "atomic_filters": null,
+    "stress_unit": "GPa",
+    "show_summary": true
+}

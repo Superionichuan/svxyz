@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import argparse
 from ase.io import read
 import numpy as np
 
@@ -96,6 +97,49 @@ def extract_properties_with_ids(xyz_file):
         print(f"发生错误: {e}")
 
 def main():
+    parser = argparse.ArgumentParser(
+        description=(
+            "dxyz: A tool to extract energy, forces, virial, stress, and additional properties from XYZ files.\n\n"
+            "Usage:\n"
+            "  dxyz [INPUT_FILE] \n  Note: If the input_file is not specified in the command line, the script will attempt to load it from txyz.json. If txyz.json is not found, a default txyz.json will be generated. Command line arguments will override settings in the JSON file.\n\n"
+            "Options:\n"
+            "  -h, --help        Show this help message and exit.\n\n"
+            "Description:\n"
+            "  This tool processes an XYZ file with embedded property information (e.g., energy, forces, virial, stress,\n"
+            "  temperature, pressure, volume). It writes extracted data into separate `.dat` files:\n"
+            "    - E.dat: Energy and system ID.\n"
+            "    - F.dat: Maximum and mean atomic force norms with system ID.\n"
+            "    - virial.dat: Virial stress tensor components with system ID.\n"
+            "    - stress.dat: Stress tensor components with system ID.\n"
+            "    - extra_info.dat: Additional properties such as temperature, pressure, volume, and optionally, the\n"
+            "                      minimum interatomic distance and associated atomic pair.\n\n"
+            "Example:\n"
+            "  dxyz sample.xyz\n"
+            "  This will process 'sample.xyz' and generate the output `.dat` files in the current directory.\n\n"
+            "Notes:\n"
+            "  If the input file contains 'mindistance' information in the `info` attribute of each frame,\n"
+            "  this tool will include additional columns for minimum interatomic distances and atomic pairs\n"
+            "  in the `extra_info.dat` file.\n\n"
+            "JSON Configuration:\n"
+            "  The tool supports optional configuration via a `dxyz.json` file. If the file is absent,\n"
+            "  it will be created with default values. The input XYZ file can also be specified in the JSON file.\n\n"
+            "Configuration Keys:\n"
+            "  - xyz_file: Path to the input XYZ file."
+        ),
+        formatter_class=argparse.RawTextHelpFormatter  # 保证换行符正常显示
+    )
+
+    parser.add_argument(
+        "input_file",
+        help="Input XYZ file path."
+    )
+
+    args = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
     # 默认 JSON 文件名
     config_file = "dxyz.json"
 

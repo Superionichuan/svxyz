@@ -1,0 +1,14 @@
+{
+    "ylabel": "$data$",
+    "show": true,
+    "output_file": "output.pdf",
+    "x1min": null,
+    "x1max": null,
+    "y1min": null,
+    "y1max": null,
+    "x2min": null,
+    "x2max": null,
+    "y2min": null,
+    "y2max": null,
+    "cmap": "viridis"
+}

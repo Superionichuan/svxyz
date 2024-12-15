@@ -2,6 +2,7 @@ import os
 import re
 import json
 import numpy as np
+import argparse
 from glob import glob
 from ase.io import read, write
 
@@ -217,6 +218,45 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
 
 # 主函数
 def main():
+    parser = argparse.ArgumentParser(
+        description="txyz: A tool to process and filter atomic configurations from vasprun.xml or OUTCAR files.\n\n"
+                    "Usage:\n"
+                    "  python txyz.py -c CONFIG_FILE [-h]\n\n"
+                    "Options:\n"
+                    "  -h, --help        Show this help message and exit.\n"
+                    "  -c CONFIG_FILE    Specify the JSON configuration file (default: txyz.json).\n\n"
+                    "Configuration Options (JSON):\n"
+                    "  - input_files         List of input file patterns (e.g., [\"vasprun.xml\", \"OUTCAR\"]).\n"
+                    "  - input_format        Format of the input files (e.g., \"vasp-xml\", \"vasp-out\").\n"
+                    "  - output_file         Name of the filtered output file (e.g., \"filtered_output.xyz\").\n"
+                    "  - skip                Skip a certain number of frames (e.g., {\"on\": 1, \"count\": 500}).\n"
+                    "  - frame_range         Range of frames to process (e.g., [0, 1000]).\n"
+                    "  - energy_range        Filter frames by energy range (e.g., [-10.0, 10.0]).\n"
+                    "  - max_atomic_force_range\n"
+                    "                        Filter frames by maximum atomic force (e.g., [0.0, 5.0]).\n"
+                    "  - pressure_range      Filter frames by pressure in GPa (e.g., [0.0, 10.0]).\n"
+                    "  - volume_range        Filter frames by volume in Å³ (e.g., [100.0, 1000.0]).\n"
+                    "  - temperature_range   Filter frames by temperature in K (e.g., [300.0, 1000.0]).\n"
+                    "  - virial_filters      Apply filters on virial stress components (e.g., {\"V_xx\": [None, None]}).\n"
+                    "  - stress_filters      Apply filters on stress components (e.g., {\"S_xx\": [None, None]}).\n"
+                    "  - atomic_filters      Apply custom atomic filters (e.g., {\"species\": [\"H\", \"O\"]}).\n"
+                    "  - stress_unit         Unit of stress values (default: \"GPa\").\n"
+                    "  - show_summary        Display a summary of filtering results (default: true).\n\n"
+                    "Example:\n"
+                    "  python txyz.py -c txyz.json",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+
+    parser.add_argument("-c", "--config", help="Specify the JSON configuration file (default: txyz.json).", default="txyz.json", type=str)
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Exit if help is displayed
+    if '-h' in sys.argv or '--help' in sys.argv:
+        sys.exit(0)
+
+
     config = load_or_create_config()
 
     input_files = config.get("input_files", ["vasprun.xml"])
