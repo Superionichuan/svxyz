@@ -28,30 +28,30 @@ def extract_properties_with_ids(xyz_file):
              open("extra_info.dat", "w") as extra_file:
 
             # 写入标题行
-            e_file.write("Energy(eV) System_ID\n")
-            f_file.write("Max_atomic_force_norm Mean_atomic_force_norm System_ID\n")
-            vir_file.write("V_xx V_yy V_zz V_yz V_xz V_xy System_ID\n")
-            stress_file.write("S_xx S_yy S_zz S_yz S_xz S_xy System_ID\n")
+            e_file.write(f"{'Energy(eV)':<20}{'System_ID':<10}\n")
+            f_file.write(f"{'Max_Force':<20}{'Mean_Force':<20}{'System_ID':<10}\n")
+            vir_file.write(f"{'V_xx':<18}{'V_yy':<18}{'V_zz':<18}{'V_yz':<18}{'V_xz':<18}{'V_xy':<18}{'System_ID':<10}\n")
+            stress_file.write(f"{'S_xx':<18}{'S_yy':<18}{'S_zz':<18}{'S_yz':<18}{'S_xz':<18}{'S_xy':<18}{'System_ID':<10}\n")
 
             # 根据是否有 `mindistance` 信息写入标题行
             if has_mindistance:
-                extra_file.write("Temperature(K) Pressure(GPa) Volume(Å³) Min_Distance(Å) Atom_Pair System_ID\n")
+                extra_file.write(f"{'Temperature(K)':<16}{'Pressure(GPa)':<15}{'Volume(Å³)':<15}{'Min_Distance(Å)':<18}{'Atom_Pair':<15}{'System_ID':<10}\n")
             else:
-                extra_file.write("Temperature(K) Pressure(GPa) Volume(Å³) System_ID\n")
+                extra_file.write(f"{'Temperature(K)':<16}{'Pressure(GPa)':<15}{'Volume(Å³)':<15}{'System_ID':<10}\n")
 
             # 遍历每一帧
             for i, atoms in enumerate(atoms_list):
                 # 提取能量
-                energy = atoms.info.get("energy", None)
+                energy = atoms.get_potential_energy()
                 if energy is None:
                     raise ValueError(f"Frame {i} is missing 'energy' in atoms.info.")
-                e_file.write(f"{energy:.6f} {i}\n")
+                e_file.write(f"{energy:<20.6f}{i:<10}\n")
 
                 # 提取力范数
                 forces = atoms.get_forces()
                 mean_force_norm = np.linalg.norm(forces, axis=1).mean()  # 平均力范数
                 max_force_norm = np.linalg.norm(forces, axis=1).max()  # 最大力范数
-                f_file.write(f"{max_force_norm:.6f} {mean_force_norm:.6f} {i}\n")
+                f_file.write(f"{max_force_norm:<20.6f}{mean_force_norm:<20.6f}{i:<10}\n")
 
                 # 提取应力
                 stress = atoms.info.get("fstress", None)
@@ -67,8 +67,8 @@ def extract_properties_with_ids(xyz_file):
                     raise TypeError(f"Unsupported type for 'fstress': {type(stress)} in frame {i}")
 
                 # 写入应力（fstress）
-                stress_file.write(f"{stress_values[0]:.6f} {stress_values[1]:.6f} {stress_values[2]:.6f} "
-                                  f"{stress_values[3]:.6f} {stress_values[4]:.6f} {stress_values[5]:.6f} {i}\n")
+                stress_file.write(f"{stress_values[0]:<18.6f}{stress_values[1]:<18.6f}{stress_values[2]:<18.6f}"
+                                  f"{stress_values[3]:<18.6f}{stress_values[4]:<18.6f}{stress_values[5]:<18.6f}{i:<10}\n")
 
                 # 计算 virial
                 stress_voigt = atoms.get_stress(voigt=True)  # ASE 应力（不含电子动能项）
@@ -76,20 +76,20 @@ def extract_properties_with_ids(xyz_file):
                 virial = [-s * volume for s in stress_voigt]  # Virial = -stress * volume
 
                 # 写入 virial
-                vir_file.write(f"{virial[0]:.6f} {virial[1]:.6f} {virial[2]:.6f} "
-                               f"{virial[3]:.6f} {virial[4]:.6f} {virial[5]:.6f} {i}\n")
+                vir_file.write(f"{virial[0]:<18.6f}{virial[1]:<18.6f}{virial[2]:<18.6f}"
+                               f"{virial[3]:<18.6f}{virial[4]:<18.6f}{virial[5]:<18.6f} {i:<10}\n")
 
                 # 提取额外信息：温度、压力和体积
                 temperature = atoms.info.get("temperature", "N/A")
                 pressure = atoms.info.get("pressure", "N/A")
-                extra_file.write(f"{temperature} {pressure} {volume:.6f} {i}\n")
 
                 # 写入 `extra_info.dat`，根据是否有 `mindistance` 动态调整列
                 if has_mindistance:
                     mindistance = atoms.info.get("mindistance", "N/A")
-                    extra_file.write(f"{temperature} {pressure} {volume:.6f} {mindistance} {i}\n")
+                    min_pair = atoms.info.get("min_pair", "N/A")
+                    extra_file.write(f"{temperature:<16}{pressure:<15}{volume:<15.6f}{mindistance:<18}{min_pair:<15}{i:<10}\n")
                 else:
-                    extra_file.write(f"{temperature} {pressure} {volume:.6f} {i}\n")
+                    extra_file.write(f"{temperature:<16}{pressure:<15}{volume:<15.6f}{i:<10}\n")
 
         print("数据已成功写入 E.dat, F.dat, virial.dat, stress.dat 和 extra_info.dat。")
 
@@ -128,17 +128,17 @@ def main():
         ),
         formatter_class=argparse.RawTextHelpFormatter  # 保证换行符正常显示
     )
-
+    
     parser.add_argument(
         "input_file",
         help="Input XYZ file path."
-    )
-
+    )   
+        
     args = parser.parse_args()
-
+        
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
-        sys.exit(1)
+        sys.exit(1) 
 
     # 默认 JSON 文件名
     config_file = "dxyz.json"
