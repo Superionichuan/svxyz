@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="svxyz",
-    version="2.1.2",
+    version="2.1.3",
     description="A suite of scripts for XYZ data processing (txyz, xyz2pos, dxyz, pxyz)",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
