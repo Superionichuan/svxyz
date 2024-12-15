@@ -1,4 +1,5 @@
 [console_scripts]
+analpos = svxyz.analpos:main
 asefmt = svxyz.asefmt:main
 dxyz = svxyz.dxyz:main
 pxyz = svxyz.pxyz:main

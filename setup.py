@@ -23,6 +23,7 @@ setup(
             "xyz2pos=svxyz.xyz2pos:main",
             "dxyz=svxyz.dxyz:main",
             "pxyz=svxyz.pxyz:main",
+            "analpos=svxyz.analpos:main",
             "asefmt=svxyz.asefmt:main"
         ],
     },
