@@ -221,7 +221,7 @@ def main():
         description=(
             "pxyz: A tool to visualize and analyze atomic simulation data from various sources.\n\n"
             "Usage:\n"
-            "  python pxyz.py <data_type> <indices...> [-h]\n\n"
+            "  pxyz <data_type> <indices...> [-h]\n\n"
             "Options:\n"
             "  -h, --help      Show this help message and exit.\n\n"
             "Arguments:\n"
@@ -239,7 +239,7 @@ def main():
             "Output:\n"
             "  The plots can be displayed interactively or saved to a file, based on the JSON configuration.\n\n"
             "Example:\n"
-            "  python pxyz.py F 0 1\n"
+            "  pxyz F 0 1\n"
             "  This will plot the first two force norm curves (max and mean) from F.dat.\n\n"
             "Notes:\n"
             "  - Each data file must be properly formatted.\n"
@@ -280,7 +280,7 @@ def main():
         config = json.load(f)
 
     if len(sys.argv) < 3:
-        print("Usage: python pxyz.py <data_type> <indices...>")
+        print("Usage: pxyz <data_type> <indices...>")
         sys.exit(1)
 
     data_type = sys.argv[1]
