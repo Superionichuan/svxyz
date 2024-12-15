@@ -219,6 +219,7 @@ def filter_atoms(atoms_list, stresses, temperatures, config):
 
 # 主函数
 def main():
+"""
     parser = argparse.ArgumentParser(
         description="txyz: A tool to process and filter atomic configurations from vasprun.xml or OUTCAR files.\n\n"
                     "Usage:\n"
@@ -256,7 +257,7 @@ def main():
     # Exit if help is displayed
     if '-h' in sys.argv or '--help' in sys.argv:
         sys.exit(0)
-
+"""
 
     config = load_or_create_config()
 
