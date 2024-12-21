@@ -38,7 +38,9 @@ def create_default_config():
 def load_or_create_config():
     """加载配置文件，如果不存在则生成并退出"""
     if not os.path.exists(CONFIG_FILE):
-        return None
+        create_default_config()
+        print("JSON configuration file not found. Generated a default configuration. Exiting now.")
+        sys.exit(0)
     with open(CONFIG_FILE, "r") as f:
         return json.load(f)
 
@@ -98,19 +100,8 @@ def parse_arguments(args, config):
 
 def main():
     """主函数"""
-    args = sys.argv[1:]
-
-    # 检查是否为帮助选项
-    if "-h" in args or "--help" in args:
-        show_help()
-        sys.exit(0)
-
     config = load_or_create_config()
-
-    if config is None:
-        create_default_config()
-        print("JSON configuration file not found. Generated a default configuration. Exiting now.")
-        sys.exit(0)
+    args = sys.argv[1:]
 
     if args:
         parse_arguments(args, config)
